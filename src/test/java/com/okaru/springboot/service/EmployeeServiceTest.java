@@ -16,11 +16,14 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class EmployeeServiceTest {
@@ -32,6 +35,7 @@ public class EmployeeServiceTest {
     private EmployeeServiceImpl employeeService;
 
     private Employee employee;
+    private Employee employee1;
 
     @BeforeEach
     public void setup(){
@@ -41,6 +45,13 @@ public class EmployeeServiceTest {
                 .lastName("tsukero")
                 .email("aklivmairkoo@gmail.com")
                 .build();
+
+        employee1 = Employee.builder()
+                .id(2L)
+                .firstName("Nanji")
+                .lastName("Kimiko")
+                .email("aklivmairkoo666@gmail.com")
+                .build();
 //        employeeJpaRepository = Mockito.mock(EmployeeJpaRepository.class);
 //        employeeService = new EmployeeServiceImpl(employeeJpaRepository);
     }
@@ -49,9 +60,9 @@ public class EmployeeServiceTest {
     @Test
     public void givenEmployeeObject_whenSaveEmployee_thenReturnEmployeeObject(){
         // given
-        BDDMockito.given(employeeJpaRepository.findEmployeeByEmail(employee.getEmail()))
+        given(employeeJpaRepository.findEmployeeByEmail(employee.getEmail()))
                 .willReturn(Optional.empty());
-        BDDMockito.given(employeeJpaRepository.save(employee)).willReturn(employee);
+        given(employeeJpaRepository.save(employee)).willReturn(employee);
 
         System.out.println("employeJpaRespository " + employeeJpaRepository);
         System.out.println("employeService " + employeeService);
@@ -68,7 +79,7 @@ public class EmployeeServiceTest {
     @Test
     public void givenExistingEmail_whenSaveEmployee_thenThrowsException(){
         // given
-        BDDMockito.given(employeeJpaRepository.findEmployeeByEmail(employee.getEmail()))
+        given(employeeJpaRepository.findEmployeeByEmail(employee.getEmail()))
                 .willReturn(Optional.of(employee));
 
         System.out.println("employeJpaRespository " + employeeJpaRepository);
@@ -82,4 +93,78 @@ public class EmployeeServiceTest {
         //then
         verify(employeeJpaRepository, never()).save(any(Employee.class));
     }
+
+    @DisplayName("JUnit Test for getAll employees method" )
+    @Test
+    public void givenEmployeesList_whenGetAllEmployees_thenReturnEmployeesList(){
+        //given
+        given(employeeJpaRepository.findAll()).willReturn(List.of(employee, employee1));
+
+        //when - action or the behavior that we are going to test
+        List<Employee> employeeList = employeeService.getAllEmployees();
+
+        //then - verify output
+        Assertions.assertThat(employeeList).isNotNull();
+        Assertions.assertThat(employeeList).size().isEqualTo(2);
+
+    }
+
+    @DisplayName("JUnit Test for getAll employees method negative scenario" )
+    @Test
+    public void givenEmptyEmployeesList_whenGetAllEmployees_thenfails(){
+        //given - precondition or setup
+        given(employeeJpaRepository.findAll()).willReturn(Collections.emptyList());
+
+        //when - action or the behavior that we are going to test
+        List<Employee> employeeList = employeeService.getAllEmployees();
+
+        //then - verify output
+        Assertions.assertThat(employeeList).isEmpty();
+        Assertions.assertThat(employeeList).size().isEqualTo(0);
+
+    }
+
+    @Test
+    public void givenEmployeeId_whenGetEmployeeById_thenReturnEmployee(){
+        //given - precondition or setup
+        given(employeeJpaRepository.findEmployeeById(1L)).willReturn(Optional.of(employee));
+
+        //when - action or the behavior that we are going to test
+        Optional<Employee> findEmployee = employeeService.getEmployeeById(1L);
+
+        //then - verify output
+        Assertions.assertThat(findEmployee).isNotNull();
+        Assertions.assertThat(findEmployee.get().getFirstName()).isEqualTo("okaru");
+
+    }
+
+    @Test
+    public void givenEmployee_whenUpdateEmployee_thenReturnUpdatedEmployee(){
+        //given
+        given(employeeJpaRepository.save(employee)).willReturn(employee);
+        employee.setFirstName("Alvaro");
+        employee.setEmail("cancerfire_yamialvaro@hotmail.com");
+
+        //when
+        employeeService.updateEmployee(employee);
+
+        //then
+        Assertions.assertThat(employee.getFirstName()).isEqualTo("Alvaro");
+        Assertions.assertThat(employee.getEmail()).isEqualTo("cancerfire_yamialvaro@hotmail.com");
+
+    }
+
+    @Test
+    public void givenEmployeeId_whenDeleteEmployee_thenReturnsNothing(){
+        //given
+        willDoNothing().given(employeeJpaRepository).deleteById(1L);
+
+        //when
+        employeeService.deleteEmployee(1L);
+
+        //then
+        verify(employeeJpaRepository, times(1)).deleteById(any());
+    }
+
+
 }

@@ -7,6 +7,7 @@ import com.okaru.springboot.service.EmployeeService;
 import jakarta.inject.Inject;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -29,5 +30,31 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new ResourceNoFoundException("Employee already exists with given email: " + employee.getEmail());
         }
         return employeeJpaRepository.save(employee);
+    }
+
+    @Override
+    public List<Employee> getAllEmployees() {
+        return employeeJpaRepository.findAll();
+    }
+
+    @Override
+    public Optional<Employee> getEmployeeById(Long id) {
+
+        Optional<Employee> employee = employeeJpaRepository.findEmployeeById(id);
+
+        if (employee.isEmpty()){
+            throw new ResourceNoFoundException("Employee with given Id is not found ");
+        }
+        return employee;
+    }
+
+    @Override
+    public Employee updateEmployee(Employee updatedEmployee) {
+        return employeeJpaRepository.save(updatedEmployee);
+    }
+
+    @Override
+    public void deleteEmployee(Long id) {
+        employeeJpaRepository.deleteById(id);
     }
 }
